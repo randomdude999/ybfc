@@ -138,7 +138,7 @@ int main(int argc, char** argv) {
 			}
 			if(inp_buf[i] == ']') {
 				end_run();
-				if(loopdepth == 0) error("error: unbalanced brackets");
+				if(loopdepth == 0) error("error: too many closing brackets");
 				uint32_t loop_tgt = loopstack[--loopdepth];
 				uint32_t reloc_at = loop_tgt + sizeof(start_loop_asm) - 4;
 				writejmpto(0xe9, loop_tgt);
@@ -147,6 +147,7 @@ int main(int argc, char** argv) {
 		}
 	}
 	end_run();
+	if(loopdepth != 0) error("error: unclosed brackets");
 	writebuf(fin_asm);
 	uint32_t fsz = out_off;
 	// twice because this is both the memory and file size
