@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <stdint.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #include "header.h"
 
@@ -28,6 +29,7 @@ int run_length = 0;
 char run_type;
 FILE* output;
 uint32_t out_off;
+const char* out_fname = "a.out";
 
 void writebuf2(byte* buf, size_t size) {
 	if(fwrite(buf, 1, size, output) != size)
@@ -107,21 +109,18 @@ void end_run() {
 	run_type = '\0';
 }
 
-int main(int argc, char** argv) {
-	if(argc != 3)
-		error("usage: %s <input> <output>\nuse \"-\" to read from stdin", argv[0]);
+void process_file(char * fname) {
 	FILE* inp = stdin;
-	if(strcmp(argv[1], "-") != 0) {
-		inp = fopen(argv[1], "r");
+	if(strcmp(fname, "-") != 0) {
+		inp = fopen(fname, "r");
 		if(!inp) error("error opening input file: %s", strerror(errno));
 	}
-	output = fopen(argv[2], "w");
-	if(!output) error("error opening output file: %s", strerror(errno));
-	chmod(argv[2], 0755);
-	writebuf(header_bin);
 	while(1) {
 		char inp_buf[1024];
 		int numread;
+		// check this manually to avoid having to press ^D twice
+		// when manually typing input
+		if(feof(inp)) break;
 		if((numread = fread(inp_buf, 1, 1024, inp)) == 0) break;
 		for(int i=0; i<numread; i++) {
 			if(inp_buf[i] == '+' || inp_buf[i] == '-' ||
@@ -148,6 +147,48 @@ int main(int argc, char** argv) {
 			}
 		}
 	}
+
+}
+
+int main(int argc, char** argv) {
+	uint32_t tape_size = 0x8000;
+	int opt;
+	while ((opt = getopt(argc, argv, "t:o:")) != -1) {
+		switch(opt) {
+		case 'o':
+			out_fname = strdup(optarg);
+			break;
+		case 't':
+			errno = 0;
+			long tmp_tape = strtol(optarg, NULL, 10);
+			if(errno || tmp_tape < 0 || tmp_tape > UINT32_MAX)
+				error("error: invalid tape size");
+			tape_size = tmp_tape;
+			if(tape_size & (tape_size-1))
+				error("error: tape size must be a power of 2");
+			if(tape_size > (1ll<<30))
+				error("error: tape too large (maximum 1GiB)");
+			break;
+		default:
+			error("usage: %s [-t tape_size] [-o output] <inputs>\n\n"
+"Output defaults to a.out if not specified. Tape size must be a power of 2,\n"
+"and not more than 1GiB. The default tape size is 32KiB.", argv[0]);
+		}
+	}
+	if(optind >= argc)
+		error("error: no input files specified (use - to read from stdin)");
+	output = fopen(out_fname, "w");
+	if(!output) error("error opening output file: %s", strerror(errno));
+	chmod(argv[2], 0755);
+
+	writebuf(header_bin);
+	reloc32(header_tape_size, tape_size);
+	reloc32(header_tape_andmask, header_tape_addr + tape_size - 1);
+
+	for(; optind < argc; optind++) {
+		process_file(argv[optind]);
+	}
+
 	end_run();
 	if(loopdepth != 0) error("error: unclosed brackets");
 	writebuf(fin_asm);
@@ -156,7 +197,5 @@ int main(int argc, char** argv) {
 	reloc32(header_file_size_loc, fsz);
 	reloc32(header_file_size_loc+4, fsz);
 
-	reloc32(header_tape_size, 0x00100000);
-	reloc32(header_tape_andmask, header_tape_addr + 0x00100000 - 1);
 	
 }

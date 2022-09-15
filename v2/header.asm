@@ -1,4 +1,4 @@
-tape_addr     equ 0x01000000
+tape_addr     equ 0x40000000
 header_tape_addr equ tape_addr
 ;tape_size     equ 0x00100000
 
@@ -7,7 +7,7 @@ header_tape_addr equ tape_addr
 
 [bits 32]
 [map symbols header_sym.map]
-org 0x70000000
+org 0x01000000
 
   ehdr:                                                 ; Elf32_Ehdr
                 db      0x7F, "ELF", 1, 1, 1, 0         ;   e_ident
@@ -29,6 +29,16 @@ org 0x70000000
   ehdrsize      equ     $ - ehdr
   
   phdr:                                                 ; Elf32_Phdr
+                dd      1                               ;   p_type
+                dd      0                               ;   p_offset
+                dd      $$                              ;   p_vaddr
+                dd      $$                              ;   p_paddr
+header_file_size_loc   equ $ - $$
+                dd      0x69696969                      ;   p_filesz
+                dd      0x69696969                      ;   p_memsz
+                dd      5                               ;   p_flags
+                dd      1                               ;   p_align
+  phdrsize      equ     $ - phdr
                                                         ; 2nd header entry
                 dd      1                               ;   p_type
                 dd      0                               ;   p_offset
@@ -38,16 +48,6 @@ org 0x70000000
 header_tape_size equ $ - $$
                 dd      0x69696969                       ;   p_memsz
                 dd      6                               ;   p_flags
-                dd      1                               ;   p_align
-  phdrsize      equ     $ - phdr
-                dd      1                               ;   p_type
-                dd      0                               ;   p_offset
-                dd      $$                              ;   p_vaddr
-                dd      $$                              ;   p_paddr
-header_file_size_loc   equ $ - $$
-                dd      0x69696969                      ;   p_filesz
-                dd      0x69696969                      ;   p_memsz
-                dd      5                               ;   p_flags
                 dd      1                               ;   p_align
   
 
