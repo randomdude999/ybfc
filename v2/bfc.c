@@ -179,7 +179,7 @@ int main(int argc, char** argv) {
 		error("error: no input files specified (use - to read from stdin)");
 	output = fopen(out_fname, "w");
 	if(!output) error("error opening output file: %s", strerror(errno));
-	chmod(argv[2], 0755);
+	chmod(out_fname, 0755);
 
 	writebuf(header_bin);
 	reloc32(header_tape_size, tape_size);
