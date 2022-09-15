@@ -7,7 +7,6 @@
 
 #include "header.h"
 
-//#define error(x) fputs("error: " x "\n", stderr), exit(1)
 #define error(x, ...) (fprintf(stderr, x "\n", ## __VA_ARGS__), exit(1))
 
 #define byte uint8_t
@@ -23,7 +22,6 @@ byte start_loop_asm[] = { 0x3a, 0x39, 0x0f, 0x84, 42, 42, 42, 42 };
                 // xor eax,eax; inc eax; xor ebx,ebx; int 0x80
 byte fin_asm[] = { 0x31, 0xc0, 0x40, 0x31, 0xdb, 0xcd, 0x80};
 
-int loopi = 0;
 uint32_t loopstack[256];
 int loopdepth = 0;
 int run_length = 0;
@@ -48,7 +46,6 @@ void writejmpto(byte opc, uint32_t target) {
 }
 
 void reloc32(uint32_t reloc_at, uint32_t data) {
-
 	uint32_t old_out_pos = out_off;
 	out_off = reloc_at;
 	fseek(output, out_off, SEEK_SET);
@@ -63,42 +60,47 @@ void end_run() {
 	if(run_type == '+') {
 		if(run_length == 1) writebuf(inc_asm);
 		else {
+			// add byte [ecx], imm8
 			byte buf[] = { 0x80, 0x01, run_length };
 			writebuf(buf);
 		}
 	}
 	else if(run_type == '-') {
 		if(run_length == 1) writebuf(dec_asm);
-		// this can probably be done with adds too... who cares
 		else {
+			// sub byte [ecx], imm8
 			byte buf[] = { 0x80, 0x29, run_length };
 			writebuf(buf);
 		}
 	}
 	else if(run_type == '<') {
 		if(run_length > 127) {
+			// sub ecx, imm32
 			byte buf[] = { 0x81, 0xe9, run_length, run_length >> 8,
 				run_length >> 16, run_length >> 24 };
 			writebuf(buf);
 		}
 		else if(run_length > 1) {
+			// sub ecx, imm8
 			byte buf[] = { 0x83, 0xe9, run_length };
 			writebuf(buf);
 		}
-		else if(run_length == 1) writebuf1(0x49);
+		else if(run_length == 1) writebuf1(0x49); // dec ecx
 		writebuf(left_wrap_asm);
 	}
 	else if(run_type == '>') {
 		if(run_length > 127) {
+			// add ecx, imm32
 			byte buf[] = { 0x81, 0xc1, run_length, run_length >> 8,
 				run_length >> 16, run_length >> 24 };
 			writebuf(buf);
 		}
 		else if(run_length > 1) {
+			// add ecx, imm8
 			byte buf[] = { 0x83, 0xc1, run_length };
 			writebuf(buf);
 		}
-		else if(run_length == 1) writebuf1(0x41);
+		else if(run_length == 1) writebuf1(0x41); // inc ecx
 		writebuf(right_wrap_asm);
 	}
 	run_length = 0;
