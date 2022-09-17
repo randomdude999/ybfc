@@ -1,3 +1,9 @@
+CFLAGS += -MMD
+
+srcs = bfc.c arch_i386.c arch_common.c
+objs = $(srcs:.c=.o)
+deps = $(srcs:.c=.d)
+
 all: bfc
 
 header.h: header.asm
@@ -6,9 +12,9 @@ header.h: header.asm
 	cat header_sym.map | grep header_ | sed 's/\(.*\)  \(.*\)/uint32_t \2 = 0x\1;/' >>$@
 	rm -f header.bin header_sym.map
 
-bfc.o: header.h
-
-bfc: bfc.o 
+bfc: bfc.o arch_i386.o arch_common.o
 
 clean:
-	rm -f bfc bfc.o header.h
+	rm -f bfc $(objs) header.h
+
+-include $(deps)
