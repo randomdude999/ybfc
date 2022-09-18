@@ -62,7 +62,8 @@ through rax or similar.
 
 Linux's x86-64 memory map means that the largest block that is suitable for the
 tape is 32TiB, so this is the tape size limit. This would be a lot larger with
-5-level page tables, but well, I don't have them so I can't test it.
+5-level page tables, but well, I don't have a CPU that supports them so I can't
+test it.
 
 Branch distance is currently still limited to 2GiB because the basic call
 instruction can't fit more. I have some ideas for working around this.
