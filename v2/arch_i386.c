@@ -1,13 +1,16 @@
-#include "arch_i386.h"
+#include "arch_common.h"
 #include "bfc_common.h"
 
-#include "header.h"
+#include "header_i386.h"
 
-
-static void writejmpto(byte opc, uint32_t target) {
-	uint32_t offset = target - (out_off+5);
-	byte buf[5] = {opc, offset, offset >> 8, offset >> 16, offset >> 24};
+static void reloc32(size_t reloc_at, uint32_t data) {
+	uint32_t old_out_pos = out_off;
+	out_off = reloc_at;
+	fseek(output, out_off, SEEK_SET);
+	byte buf[4] = { data, data >> 8, data >> 16, data >> 24 };
 	writebuf(buf);
+	out_off = old_out_pos;
+	fseek(output, out_off, SEEK_SET);
 }
 
 void write_i386_header(size_t tape_size) {
@@ -44,28 +47,28 @@ void write_i386_cmd_dec_run(uint8_t run_length) {
 
 void write_i386_cmd_l_run(size_t run_length) {
 	//       dec ecx    sub ecx, imm8              sub ecx, imm32
-	RLE_LONG(B(0x49), B(0x83, 0xe9, run_length), B(0x81, 0xe9, ENC_LE(run_length)));
+	RLE_LONG(B(0x49), B(0x83, 0xe9, run_length), B(0x81, 0xe9, LE32(run_length)));
 	// and ecx, edi; or ecx, esi
 	writebuf(B(0x21, 0xf9, 0x09, 0xf1));
 }
 
 void write_i386_cmd_r_run(size_t run_length) {
 	//       inc ecx    add ecx, imm8              add ecx, imm32
-	RLE_LONG(B(0x41), B(0x83, 0xc1, run_length), B(0x81, 0xc1, ENC_LE(run_length)));
+	RLE_LONG(B(0x41), B(0x83, 0xc1, run_length), B(0x81, 0xc1, LE32(run_length)));
 	// and ecx, edi
 	writebuf(B(0x21, 0xf9));
 }
 
 void write_i386_cmd_inp() {
-	writejmpto(0xe8, header_sub_input);
+	writebuf(B(0xe8, LE32(header_sub_input - out_off - 5)));
 }
 
 void write_i386_cmd_out() {
-	writejmpto(0xe8, header_sub_output);
+	writebuf(B(0xe8, LE32(header_sub_output - out_off - 5)));
 }
 
                        // cmp bh, [ecx]; je <relocated addr>
-byte start_loop_asm[] = { 0x3a, 0x39, 0x0f, 0x84, 42, 42, 42, 42 };
+static byte start_loop_asm[] = { 0x3a, 0x39, 0x0f, 0x84, 42, 42, 42, 42 };
 
 void write_i386_start_loop() {
 	writebuf(start_loop_asm);
@@ -73,6 +76,6 @@ void write_i386_start_loop() {
 
 void write_i386_end_loop(size_t loop_tgt) {
 	uint32_t reloc_at = loop_tgt + sizeof(start_loop_asm) - 4;
-	writejmpto(0xe9, loop_tgt);
+	writebuf(B(0xe9, LE32(loop_tgt - out_off - 5)));
 	reloc32(reloc_at, out_off - (reloc_at+4));
 }

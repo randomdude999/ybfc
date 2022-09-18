@@ -1,5 +1,5 @@
 tape_addr     equ 0x80000000
-header_tape_addr equ tape_addr
+export_tape_addr equ tape_addr
 ;tape_size     equ 0x00100000
 
 ; assumes size is a power of 2, and that the size'th bit in addr is 0
@@ -33,7 +33,7 @@ org 0x01000000
                 dd      0                               ;   p_offset
                 dd      $$                              ;   p_vaddr
                 dd      $$                              ;   p_paddr
-header_file_size_loc   equ $ - $$
+export_file_size_loc   equ $ - $$
                 dd      0x69696969                      ;   p_filesz
                 dd      0x69696969                      ;   p_memsz
                 dd      5                               ;   p_flags
@@ -45,19 +45,19 @@ header_file_size_loc   equ $ - $$
                 dd      tape_addr                       ;   p_vaddr
                 dd      0                               ;   p_paddr
                 dd      0                               ;   p_filesz
-header_tape_size equ $ - $$
+export_tape_size equ $ - $$
                 dd      0x69696969                       ;   p_memsz
                 dd      6                               ;   p_flags
                 dd      1                               ;   p_align
   
 
-header_sub_input equ $ - $$
+export_sub_input equ $ - $$
     xor eax,eax
     mov al, 3
     mov bl, 0
     int 0x80
     ret
-header_sub_output equ $ - $$
+export_sub_output equ $ - $$
     xor eax,eax
     mov al, 4
     mov bl, 1
@@ -69,6 +69,6 @@ _start:
     xor edx,edx
     inc edx
     mov ecx, tape_addr
-header_tape_andmask equ $ - $$ + 1
+export_tape_andmask equ $ - $$ + 1
     mov edi, 0x69696969
     mov esi, ecx

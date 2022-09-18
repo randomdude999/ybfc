@@ -1,18 +1,21 @@
-CFLAGS += -MMD
+CFLAGS += -MMD -Ibuild
 
-srcs = bfc.c arch_i386.c arch_common.c
+srcs = bfc.c arch_i386.c arch_common.c arch_x64.c
 objs = $(srcs:%.c=build/%.o)
 deps = $(objs:.o=.d)
 
 all: bfc
 
-header.h: header.asm
+build/header_i386.h build/header_x64.h: build/header_%.h: header_%.asm
 	nasm -f bin -o header.bin $^
-	xxd -i header.bin >$@
-	cat header_sym.map | grep header_ | sed 's/\(.*\)  \(.*\)/uint32_t \2 = 0x\1;/' >>$@
+	echo "static uint8_t header_bin[] = {" >$@
+	cat header.bin | xxd -i >>$@
+	echo "};" >>$@
+	cat header_sym.map | grep export_ | sed 's/\(.*\)  export_\(.*\)/static const size_t header_\2 = 0x\1;/' >>$@
 	rm -f header.bin header_sym.map
 
-build/arch_i386.o: header.h
+build/arch_i386.o: build/header_i386.h
+build/arch_x64.o: build/header_x64.h
 
 build/%.o: %.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
@@ -21,6 +24,9 @@ bfc: $(objs)
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 clean:
-	rm -f bfc $(objs) header.h
+	rm -f bfc $(objs) $(deps) build/header_*.h
+
+hw: bfc
+	./bfc -m x64 t/hwshort.b -o $@
 
 -include $(deps)
