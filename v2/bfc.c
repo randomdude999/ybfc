@@ -9,8 +9,9 @@
 #include "bfc_common.h"
 #include "arch_common.h"
 
-size_t loopstack[256];
-int loopdepth = 0;
+size_t* loopstack;
+size_t loopstack_size = 256;
+size_t loopdepth = 0;
 size_t run_length = 0;
 char run_type;
 const char* out_fname = "a.out";
@@ -27,6 +28,14 @@ void writebuf2(byte* buf, size_t size) {
 void writebuf1(byte b) {
 	byte arr[1] = {b};
 	writebuf2(arr, 1);
+}
+
+static void push_loopstack(size_t val) {
+	if(loopdepth == loopstack_size) {
+		loopstack_size *= 2;
+		loopstack = realloc(loopstack, loopstack_size*sizeof(size_t));
+	}
+	loopstack[loopdepth++] = val;
 }
 
 void end_run() {
@@ -58,16 +67,14 @@ void process_file(char * fname) {
 				if(inp_buf[i] != run_type) end_run();
 				run_type = inp_buf[i]; run_length++;
 			}
-			if(inp_buf[i] == '.') { end_run(); write_cmd_out(); }
-			if(inp_buf[i] == ',') { end_run(); write_cmd_inp(); }
-			if(inp_buf[i] == '[') {
+			else if(inp_buf[i] == '.') { end_run(); write_cmd_out(); }
+			else if(inp_buf[i] == ',') { end_run(); write_cmd_inp(); }
+			else if(inp_buf[i] == '[') {
 				end_run();
-				if(loopdepth == sizeof(loopstack)/sizeof(size_t))
-					error("error: too many nested loops");
-				loopstack[loopdepth++] = out_off;
+				push_loopstack(out_off);
 				write_start_loop();
 			}
-			if(inp_buf[i] == ']') {
+			else if(inp_buf[i] == ']') {
 				end_run();
 				if(loopdepth == 0) error("error: too many closing brackets");
 				size_t loop_tgt = loopstack[--loopdepth];
@@ -80,6 +87,7 @@ void process_file(char * fname) {
 int main(int argc, char** argv) {
 	size_t tape_size = 0x8000;
 	int opt;
+	loopstack = malloc(loopstack_size*sizeof(size_t));
 	while ((opt = getopt(argc, argv, "t:o:m:")) != -1) {
 		switch(opt) {
 		case 'o':
