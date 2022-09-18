@@ -1,18 +1,15 @@
 a shitty brainfuck compiler
 ===========================
 
-Only works on Linux (both the compiler and generated binaries). Also note that
-it outputs 32-bit binaries. This shouldn't cause a problem though, as they are
-statically linked, so you don't need to install any 32-bit libraries to run the
-outputs.
+Only works on Linux (both the compiler and generated binaries).
 
 Building: run `make`. requires gcc and nasm to be installed.
 
 Usage: `./bfc <input file name> -o <output>`, where output defaults to a.out.
 The tape size is also configurable with the `-t` option. However, due to
 implementation details, it must be a power of 2, and can't be larger than 1GiB.
-This shouldn't be a problem though, as most brainfuck interpreters don't give
-you nearly as much space.
+You can also change target architecture using `-m`, currently `i386` and `x64`
+are implemented. Note that for x64, the tape size limit is 32TiB.
 
 brainfuck dialect
 =================
@@ -21,8 +18,8 @@ This implementation has a wrapping tape with a configurable length, defaulting
 to 32KiB (close to the 30000 cells of the original compiler). Cell values are
 8-bit with wrapping. The input routine leaves the cell unchanged on EOF.
 
-implementation details
-======================
+implementation details (i386)
+=============================
 
 All registers have a fixed purpose during the entire execution of the program:
 
@@ -43,3 +40,29 @@ the high bits correctly.
 The registers are laid out such that syscalls can be performed without moving
 any data between registers. `eax` and `ebx` are overwritten by the input/output
 routines with the syscall number and file descriptor.
+
+implementation details (x64)
+============================
+
+The general structure is similar to i386, along with the tape wrapping. However,
+register allocation is different due to the different syscall interface.
+
+rax - clobbered by input/output routines, also used for building 64-bit addresses
+rbx - address of input subroutine (so each input command becomes `call rbx`)
+rcx - clobbered by `syscall`
+rdx - clobbered by input/output routines
+rsi - pointer to tape position
+rdi - clobbered by input/output routines
+rbp - address of output subroutine
+r9 - pointer to start of tape buffer
+r10 - pointer to end if tape minus 1
+
+x86-64 has very few imm64 instructions, so most 64-bit literals need to go
+through rax or similar.
+
+Linux's x86-64 memory map means that the largest block that is suitable for the
+tape is 32TiB, so this is the tape size limit. This would be a lot larger with
+5-level page tables, but well, I don't have them so I can't test it.
+
+Branch distance is currently still limited to 2GiB because the basic call
+instruction can't fit more. I have some ideas for working around this.

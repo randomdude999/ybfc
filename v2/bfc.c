@@ -103,7 +103,8 @@ int main(int argc, char** argv) {
 		default:
 			error("usage: %s [-t tape_size] [-o output] [-m arch] <inputs>\n\n"
 "Output defaults to a.out if not specified. Tape size must be a power of 2,\n"
-"and not more than 1GiB. The default tape size is 32KiB.", argv[0]);
+"and not more than 1GiB (32TiB for x64). The default tape size is 32KiB.\n"
+"Available architectures are i386 and x64.", argv[0]);
 		}
 	}
 	if(tape_size > (current_arch == ARCH_i386 ? (1ll<<30) : (1ll<<45)))
