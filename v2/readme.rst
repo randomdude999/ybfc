@@ -49,11 +49,12 @@ register allocation is different due to the different syscall interface.
 
 rax - clobbered by input/output routines, also used for building 64-bit addresses
 rbx - address of input subroutine (so each input command becomes `call rbx`)
-rcx - clobbered by `syscall`
+rcx - address of trampoline routine for performing long jumps
 rdx - always 1 (`dh=0` is used for comparison with 0, also used as buffer size by syscalls)
 rsi - pointer to tape position
 rdi - clobbered by input/output routines
 rbp - address of output subroutine
+r8 - address of another trampoline
 r9 - pointer to start of tape buffer
 r10 - pointer to end if tape minus 1
 
@@ -65,5 +66,4 @@ tape is 32TiB, so this is the tape size limit. This would be a lot larger with
 5-level page tables, but well, I don't have a CPU that supports them so I can't
 test it.
 
-Branch distance is currently still limited to 2GiB because the basic call
-instruction can't fit more. I have some ideas for working around this.
+TODO: document branch distance hacks
