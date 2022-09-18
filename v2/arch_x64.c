@@ -72,8 +72,8 @@ void write_x64_cmd_out() {
 	writebuf(B(0xff, 0xd5)); // call rbp
 }
 
-                       // cmp bh, [rsi]; je <relocated addr>
-static byte start_loop_asm[] = { 0x3a, 0x3e, 0x0f, 0x84, 42, 42, 42, 42 };
+                       // cmp dh, [rsi]; je <relocated addr>
+static byte start_loop_asm[] = { 0x3a, 0x36, 0x0f, 0x84, 42, 42, 42, 42 };
 
 void write_x64_start_loop() {
 	writebuf(start_loop_asm);

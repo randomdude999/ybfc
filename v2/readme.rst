@@ -50,7 +50,7 @@ register allocation is different due to the different syscall interface.
 rax - clobbered by input/output routines, also used for building 64-bit addresses
 rbx - address of input subroutine (so each input command becomes `call rbx`)
 rcx - clobbered by `syscall`
-rdx - clobbered by input/output routines
+rdx - always 1 (`dh=0` is used for comparison with 0, also used as buffer size by syscalls)
 rsi - pointer to tape position
 rdi - clobbered by input/output routines
 rbp - address of output subroutine
