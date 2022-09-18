@@ -27,6 +27,6 @@ clean:
 	rm -f bfc $(objs) $(deps) build/header_*.h
 
 hw: bfc
-	./bfc -m x64 t/hwshort.b -o $@
+	./bfc -m x64 t/hw.b -o $@
 
 -include $(deps)
