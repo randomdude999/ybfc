@@ -14,6 +14,7 @@ static void reloc64(size_t reloc_at, uint64_t data) {
 void write_x64_header(size_t tape_size) {
 	writebuf(header_bin);
 	reloc64(header_tape_size, tape_size);
+	if(header_tape_size_2 != 0) reloc64(header_tape_size_2, tape_size);
 	reloc64(header_tape_andmask, header_tape_addr + tape_size - 1);
 }
 
@@ -24,6 +25,7 @@ void write_x64_end() {
 	// twice because this is both the memory and file size
 	reloc64(header_file_size_loc, fsz);
 	reloc64(header_file_size_loc+8, fsz);
+	if(header_file_size_2 != 0) reloc64(header_file_size_2, fsz - header_sub_input);
 }
 
 #define RLE_BYTE(bytes1, bytesn) if(run_length == 1) writebuf(bytes1); \
