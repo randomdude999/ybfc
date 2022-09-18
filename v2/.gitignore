@@ -1,2 +1,7 @@
 build/
 bfc
+# output files for test compilations
+hw
+a.out
+# directory where i store tests
+t
