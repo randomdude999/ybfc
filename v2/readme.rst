@@ -9,7 +9,7 @@ Usage: `./bfc <input file name> -o <output>`, where output defaults to a.out.
 The tape size is also configurable with the `-t` option. However, due to
 implementation details, it must be a power of 2, and can't be larger than 1GiB.
 You can also change target architecture using `-m`, currently `i386` and `x64`
-are implemented. Note that for x64, the tape size limit is 32TiB.
+are implemented. Note that for x64, the tape size limit is 16TiB.
 
 brainfuck dialect
 =================
@@ -65,10 +65,10 @@ x86-64 has very few imm64 instructions, so most 64-bit literals need to go
 through rax or similar.
 
 Linux's x86-64 memory map means that the largest block that is suitable for the
-tape is 32TiB, so this is the tape size limit. This would be a lot larger with
+tape is 16TiB, so this is the tape size limit. This would be a lot larger with
 5-level page tables, but well, I don't have a CPU that supports them so I can't
 test it. Also note that due to the memory map, the maximum size of the emitted
-executable code is around 32TiB aswell.
+executable code is around 32TiB.
 
 x86-64 makes branches to more than 2GB away a bit difficult. Nevertheless, the
 compiler can emit any possible loop, as long as the full program fits within the
