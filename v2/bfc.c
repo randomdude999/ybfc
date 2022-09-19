@@ -40,10 +40,10 @@ static void push_loopstack(size_t val) {
 
 void end_run() {
 	if(run_length == 0) return;
-	if(run_type == '+') write_cmd_inc_run(run_length);
-	else if(run_type == '-') write_cmd_dec_run(run_length);
-	else if(run_type == '<') write_cmd_l_run(run_length);
-	else if(run_type == '>') write_cmd_r_run(run_length);
+	if(run_type == '+') arch_cmd_inc_run(run_length);
+	else if(run_type == '-') arch_cmd_dec_run(run_length);
+	else if(run_type == '<') arch_cmd_l_run(run_length);
+	else if(run_type == '>') arch_cmd_r_run(run_length);
 	run_length = 0;
 	run_type = '\0';
 }
@@ -67,18 +67,18 @@ void process_file(char * fname) {
 				if(inp_buf[i] != run_type) end_run();
 				run_type = inp_buf[i]; run_length++;
 			}
-			else if(inp_buf[i] == '.') { end_run(); write_cmd_out(); }
-			else if(inp_buf[i] == ',') { end_run(); write_cmd_inp(); }
+			else if(inp_buf[i] == '.') { end_run(); arch_cmd_out(); }
+			else if(inp_buf[i] == ',') { end_run(); arch_cmd_inp(); }
 			else if(inp_buf[i] == '[') {
 				end_run();
 				push_loopstack(out_off);
-				write_start_loop();
+				arch_start_loop();
 			}
 			else if(inp_buf[i] == ']') {
 				end_run();
 				if(loopdepth == 0) error("error: too many closing brackets");
 				size_t loop_tgt = loopstack[--loopdepth];
-				write_end_loop(loop_tgt);
+				arch_end_loop(loop_tgt);
 			}
 		}
 	}
@@ -115,15 +115,16 @@ int main(int argc, char** argv) {
 "Available architectures are i386 and x64.", argv[0]);
 		}
 	}
-	if(tape_size > (current_arch == ARCH_i386 ? (1ll<<30) : (1ll<<45)))
-		error("error: tape too large (maximum %s)", (current_arch == ARCH_i386 ? "1GiB" : "32TiB"));
+	size_t max_tape_size = 1<<30; // arch_get_tape_max(&max_tape_size);
+	if(tape_size > max_tape_size)
+		error("error: tape too large (maximum %zu)", max_tape_size);
 	if(optind >= argc)
 		error("error: no input files specified (use - to read from stdin)");
 	output = fopen(out_fname, "w");
 	if(!output) error("error opening output file: %s", strerror(errno));
 	chmod(out_fname, 0755);
 
-	write_header(tape_size);
+	arch_write_header(tape_size);
 
 	for(; optind < argc; optind++) {
 		process_file(argv[optind]);
@@ -132,5 +133,5 @@ int main(int argc, char** argv) {
 	end_run();
 	if(loopdepth != 0) error("error: unclosed brackets");
 
-	write_end();
+	arch_end();
 }

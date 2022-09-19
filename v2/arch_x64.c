@@ -11,14 +11,14 @@ static void reloc64(size_t reloc_at, uint64_t data) {
 	fseek(output, out_off, SEEK_SET);
 }
 
-void write_x64_header(size_t tape_size) {
+void arch_x64_write_header(size_t tape_size) {
 	writebuf(header_bin);
 	reloc64(header_tape_size, tape_size);
 	if(header_tape_size_2 != 0) reloc64(header_tape_size_2, tape_size);
 	reloc64(header_tape_andmask, header_tape_addr + tape_size - 1);
 }
 
-void write_x64_end() {
+void arch_x64_end() {
             // xor eax,eax; mov al, 60; xor edi, edi; syscall
 	writebuf(B(0x31, 0xc0, 0xb0, 0x3c, 0x31, 0xff, 0x0f, 0x05));
 	uint64_t fsz = out_off;
@@ -36,17 +36,17 @@ void write_x64_end() {
 	else if(run_length < 1ull<<31) writebuf(bytes3); \
 	else writebuf(byteslong);
 
-void write_x64_cmd_inc_run(uint8_t run_length) {
+void arch_x64_cmd_inc_run(uint8_t run_length) {
 	//     inc byte [rsi]       add byte [rsi], imm8
 	RLE_BYTE(B(0xfe, 0x06), B(0x80, 0x06, run_length));
 }
 
-void write_x64_cmd_dec_run(uint8_t run_length) {
+void arch_x64_cmd_dec_run(uint8_t run_length) {
 	//     dec byte [rsi]       sub byte [rsi], imm8
 	RLE_BYTE(B(0xfe, 0x0e), B(0x80, 0x2e, run_length));
 }
 
-void write_x64_cmd_l_run(size_t run_length) {
+void arch_x64_cmd_l_run(size_t run_length) {
 	// dec rsi; sub rsi, imm8; sub rsi, imm32
 	// last one is mov rax, imm64; sub rsi, rax
 	RLE_LONG(B(0x48, 0xff, 0xce), B(0x48, 0x83, 0xee, run_length),
@@ -56,7 +56,7 @@ void write_x64_cmd_l_run(size_t run_length) {
 	writebuf(B(0x4c, 0x21, 0xce, 0x4c, 0x09, 0xd6));
 }
 
-void write_x64_cmd_r_run(size_t run_length) {
+void arch_x64_cmd_r_run(size_t run_length) {
 	// inc rsi; add rsi, imm8; add rsi, imm32
 	// last one is mov rax, imm64; add rsi, rax
 	RLE_LONG(B(0x48, 0xff, 0xc6), B(0x48, 0x83, 0xc6, run_length),
@@ -66,15 +66,15 @@ void write_x64_cmd_r_run(size_t run_length) {
 	writebuf(B(0x4c, 0x21, 0xce));
 }
 
-void write_x64_cmd_inp() {
+void arch_x64_cmd_inp() {
 	writebuf(B(0xff, 0xd3)); // call rbx
 }
 
-void write_x64_cmd_out() {
+void arch_x64_cmd_out() {
 	writebuf(B(0xff, 0xd5)); // call rbp
 }
 
-void write_x64_start_loop() {
+void arch_x64_start_loop() {
 	// cmp dh, [rsi]; je <relocated addr>
 	// note: it's important that this is 8 bytes for the long jumps to work
 	writebuf(B(0x3a, 0x36, 0x0f, 0x84, 42, 42, 42, 42));
@@ -82,7 +82,7 @@ void write_x64_start_loop() {
 
 #define LE48(x) LE32(x), (byte)(x>>32), (byte)(x>>40)
 
-void write_x64_end_loop(size_t loop_tgt) {
+void arch_x64_end_loop(size_t loop_tgt) {
 	ssize_t distance = loop_tgt - (out_off + 5);
 	int do_long_jump = (-distance > 1ll << 31);
 	if(do_long_jump) {
