@@ -1,7 +1,7 @@
 build/
-bfc
+ybfc
 # output files for test compilations
-hw
 a.out
+*.elf
 # directory where i store tests
 t

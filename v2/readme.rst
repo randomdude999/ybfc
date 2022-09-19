@@ -1,11 +1,15 @@
-a shitty brainfuck compiler
-===========================
+ybfc
+====
 
-Only works on Linux (both the compiler and generated binaries).
+Short for "y brainfuck compiler", because the entire project should make you ask
+"but y tho".
+
+The compiler should work on all Unices, the generated executables are currently
+only 32-bit or 64-bit Linux.
 
 Building: run `make`. requires gcc and nasm to be installed.
 
-Usage: `./bfc <input file name> -o <output>`, where output defaults to a.out.
+Usage: `./ybfc <input file name> -o <output>`, where output defaults to a.out.
 The tape size is also configurable with the `-t` option. However, due to
 implementation details, it must be a power of 2, and can't be larger than 1GiB.
 You can also change target architecture using `-m`, currently `i386` and `x64`

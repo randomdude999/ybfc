@@ -1,8 +1,8 @@
-srcs = bfc.c arch_i386.c arch_common.c arch_x64.c
+srcs = ybfc.c arch_i386.c arch_common.c arch_x64.c
 objs = $(srcs:%.c=build/%.o)
 deps = $(objs:.o=.d)
 
-all: bfc
+all: ybfc
 
 build/header_i386.h build/header_x64.h: build/header_%.h: header_%.asm
 	nasm -f bin -o header.bin $^
@@ -19,13 +19,13 @@ build/arch_x64.o: build/header_x64.h
 build/%.o: %.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -MMD -Ibuild -c $< -o $@
 
-bfc: $(objs)
+ybfc: $(objs)
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 clean:
-	rm -f bfc $(objs) $(deps) build/header_*.h
+	rm -f ybfc $(objs) $(deps) build/header_*.h
 
-hw: bfc
-	./bfc -m x64 t/hw.b -o $@
+hw.elf: bfc
+	./ybfc -m x64 t/hw.b -o $@
 
 -include $(deps)
