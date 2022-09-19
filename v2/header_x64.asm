@@ -12,7 +12,8 @@ dummy equ 0x1337deadbeef1337
 
 [bits 64]
 [map symbols header_sym.map]
-org 0x01000000
+export_code_start equ 0x01000000
+org export_code_start
 
   ehdr:                                                 ; Elf32_Ehdr
                 db      0x7F, "ELF", 2, 1, 1, 1         ;   e_ident

@@ -79,3 +79,12 @@ void arch_i386_end_loop(size_t loop_tgt) {
 	writebuf(B(0xe9, LE32(loop_tgt - out_off - 5)));
 	reloc32(reloc_at, out_off - (reloc_at+4));
 }
+
+void arch_i386_post_cmd() {
+	if(out_off >= header_tape_addr - header_code_start)
+		error("error: code section too large");
+}
+
+void arch_i386_get_tape_max(size_t *out) {
+	*out = (header_tape_addr & -header_tape_addr) >> 1;
+}

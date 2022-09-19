@@ -79,7 +79,8 @@ void process_file(char * fname) {
 				if(loopdepth == 0) error("error: too many closing brackets");
 				size_t loop_tgt = loopstack[--loopdepth];
 				arch_end_loop(loop_tgt);
-			}
+			} else continue;
+			arch_post_cmd();
 		}
 	}
 }
@@ -115,7 +116,7 @@ int main(int argc, char** argv) {
 "Available architectures are i386 and x64.", argv[0]);
 		}
 	}
-	size_t max_tape_size = 1<<30; // arch_get_tape_max(&max_tape_size);
+	size_t max_tape_size; arch_get_tape_max(&max_tape_size);
 	if(tape_size > max_tape_size)
 		error("error: tape too large (maximum %zu)", max_tape_size);
 	if(optind >= argc)
@@ -134,4 +135,5 @@ int main(int argc, char** argv) {
 	if(loopdepth != 0) error("error: unclosed brackets");
 
 	arch_end();
+	arch_post_cmd();
 }

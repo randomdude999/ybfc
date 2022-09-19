@@ -112,3 +112,12 @@ void arch_x64_end_loop(size_t loop_tgt) {
 	out_off = old_out_pos;
 	fseek(output, out_off, SEEK_SET);
 }
+
+void arch_x64_post_cmd() {
+	if(out_off >= header_tape_addr - header_code_start)
+		error("error: code section too large");
+}
+
+void arch_x64_get_tape_max(size_t *out) {
+	*out = (header_tape_addr & -header_tape_addr) >> 1;
+}

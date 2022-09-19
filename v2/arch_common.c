@@ -17,5 +17,5 @@ delegate(cmd_inp, (), ());
 delegate(cmd_out, (), ());
 delegate(start_loop, (), ());
 delegate(end_loop, (size_t start_at), (start_at));
-//delegate(post_cmd, (), ());
-//delegate(get_tape_max, (size_t* out), (out));
+delegate(post_cmd, (), ());
+delegate(get_tape_max, (size_t* out), (out));

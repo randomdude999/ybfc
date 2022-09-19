@@ -8,7 +8,8 @@ export_tape_addr equ tape_addr
 
 [bits 32]
 [map symbols header_sym.map]
-org 0x01000000
+export_code_start equ 0x01000000
+org export_code_start
 
   ehdr:                                                 ; Elf32_Ehdr
                 db      0x7F, "ELF", 1, 1, 1, 0         ;   e_ident
