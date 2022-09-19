@@ -74,36 +74,41 @@ void write_x64_cmd_out() {
 	writebuf(B(0xff, 0xd5)); // call rbp
 }
 
-// cmp dh, [rsi]; je <relocated addr>
-// VERY IMPORTANT that this is exactly 8 bytes
-static byte start_loop_asm[] = { 0x3a, 0x36, 0x0f, 0x84, 42, 42, 42, 42 };
-
 void write_x64_start_loop() {
-	writebuf(start_loop_asm);
+	// cmp dh, [rsi]; je <relocated addr>
+	// note: it's important that this is 8 bytes for the long jumps to work
+	writebuf(B(0x3a, 0x36, 0x0f, 0x84, 42, 42, 42, 42));
 }
+
+#define LE48(x) LE32(x), (byte)(x>>32), (byte)(x>>40)
 
 void write_x64_end_loop(size_t loop_tgt) {
 	ssize_t distance = loop_tgt - (out_off + 5);
-	if(-distance > 1ll << 31) {
+	int do_long_jump = (-distance > 1ll << 31);
+	if(do_long_jump) {
 		// need to do a long jump
 		// note that this condition is on the backwards jump not fitting, but
-		// the backwards jump is always longer so if the forwards jump
+		// the backwards jump is always longer, so if the forwards jump
 		// overflowed then the backwards one does too
 		uint64_t back_jmp_offset = loop_tgt - (out_off + 3);
-		writebuf(B(0x41, 0xff, 0xd0, LE32(back_jmp_offset), back_jmp_offset >> 32, back_jmp_offset >> 40));
-		size_t old_out_pos = out_off;
+		// call r8; <6-byte offset>
+		writebuf(B(0x41, 0xff, 0xd0, LE48(back_jmp_offset)));
+	} else {
+		// jmp <offset>
+		writebuf(B(0xe9, LE32(distance)));
+	}
+	
+	size_t old_out_pos = out_off;
+	if(do_long_jump) {
 		uint64_t fwd_jmp_offset = out_off - (loop_tgt + 2);
 		fseek(output, loop_tgt, SEEK_SET);
-		writebuf(B(0xff, 0xd1, LE32(fwd_jmp_offset), fwd_jmp_offset >> 32, fwd_jmp_offset >> 40));
-		out_off = old_out_pos;
-		fseek(output, out_off, SEEK_SET);
+		// call rcx; <6-byte offset>
+		writebuf(B(0xff, 0xd1, LE48(fwd_jmp_offset)));
 	} else {
-		size_t reloc_at = loop_tgt + sizeof(start_loop_asm) - 4;
-		writebuf(B(0xe9, LE32(distance)));
-		size_t old_out_pos = out_off;
+		size_t reloc_at = loop_tgt + 4;
 		fseek(output, reloc_at, SEEK_SET);
 		writebuf(B(LE32(out_off - (reloc_at+4))));
-		out_off = old_out_pos;
-		fseek(output, out_off, SEEK_SET);
 	}
+	out_off = old_out_pos;
+	fseek(output, out_off, SEEK_SET);
 }
