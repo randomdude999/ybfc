@@ -41,6 +41,9 @@ The registers are laid out such that syscalls can be performed without moving
 any data between registers. `eax` and `ebx` are overwritten by the input/output
 routines with the syscall number and file descriptor.
 
+Note that due to the layout of the memory map, the tape size is limited to 1GiB,
+and compiled program size to 2GiB.
+
 implementation details (x64)
 ============================
 
@@ -64,6 +67,17 @@ through rax or similar.
 Linux's x86-64 memory map means that the largest block that is suitable for the
 tape is 32TiB, so this is the tape size limit. This would be a lot larger with
 5-level page tables, but well, I don't have a CPU that supports them so I can't
-test it.
+test it. Also note that due to the memory map, the maximum size of the emitted
+executable code is around 32TiB aswell.
 
-TODO: document branch distance hacks
+x86-64 makes branches to more than 2GB away a bit difficult. Nevertheless, the
+compiler can emit any possible loop, as long as the full program fits within the
+memory map. This comes at no cost to short loops. Short loops have an 8-byte
+beginning, which tests the current tape value and branches if it's zero. Long
+loops replace this with a 2-byte `call rcx` instruction followed by a 6-byte
+offset to the end of the loop. This means the compiler can allocate 8 bytes for
+the start of any loop without knowing how long it is. `rcx` contains the address
+of a trampoline routine that uses the return pointer to read said 6-byte offset
+and jump to either into or past the loop. The end of a long loop is similar, but
+it uses `call r8`, which jumps to the middle of the trampoline, skipping the
+condition check.
