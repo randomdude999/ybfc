@@ -1,4 +1,4 @@
-srcs = ybfc.c arch_i386.c arch_common.c arch_x64.c
+srcs = ybfc.c arch_i386.c arch_x64.c
 objs = $(srcs:%.c=build/%.o)
 deps = $(objs:.o=.d)
 
