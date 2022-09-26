@@ -1,7 +1,8 @@
 #include "arch_common.h"
 #include "bfc_common.h"
 
-#include "header_i386.h"
+#define ELF_BITS 32
+#include "elf_writer.c"
 
 static void reloc32(size_t reloc_at, uint32_t data) {
 	uint32_t old_out_pos = out_off;
@@ -13,19 +14,26 @@ static void reloc32(size_t reloc_at, uint32_t data) {
 	fseek(output, out_off, SEEK_SET);
 }
 
+#define TAPE_ADDR 0x80000000
+#define CODE_START 0x01000000
+
+static void* header_write_locs;
+uint32_t input_loc, output_loc;
 void arch_i386_write_header(size_t tape_size) {
-	writebuf(header_bin);
-	reloc32(header_tape_size, tape_size);
-	reloc32(header_tape_andmask, header_tape_addr + tape_size - 1);
+	uint32_t TAPE_ANDMASK = TAPE_ADDR + tape_size - 1;
+#include "header_i386.h"
+	header_write_locs = write_elf_hdr(CODE_START, TAPE_ADDR, tape_size, 1, sizeof(prelude_func_input)+sizeof(prelude_func_output), 3);
+	input_loc = out_off;
+	writebuf(prelude_func_input);
+	output_loc = out_off;
+	writebuf(prelude_func_output);
+	writebuf(prelude_start);
 }
 
 void arch_i386_end() {
             // xor eax,eax; inc eax; xor ebx,ebx; int 0x80
 	writebuf(B(0x31, 0xc0, 0x40, 0x31, 0xdb, 0xcd, 0x80));
-	uint32_t fsz = out_off;
-	// twice because this is both the memory and file size
-	reloc32(header_file_size_loc, fsz);
-	reloc32(header_file_size_loc+4, fsz);
+	finalize_elf_header(header_write_locs);
 }
 
 #define RLE_BYTE(bytes1, bytesn) if(run_length == 1) writebuf(bytes1); \
@@ -60,11 +68,11 @@ void arch_i386_cmd_r_run(size_t run_length) {
 }
 
 void arch_i386_cmd_inp() {
-	writebuf(B(0xe8, LE32(header_sub_input - out_off - 5)));
+	writebuf(B(0xe8, LE32(input_loc - out_off - 5)));
 }
 
 void arch_i386_cmd_out() {
-	writebuf(B(0xe8, LE32(header_sub_output - out_off - 5)));
+	writebuf(B(0xe8, LE32(output_loc - out_off - 5)));
 }
 
                        // cmp bh, [ecx]; je <relocated addr>
@@ -81,10 +89,10 @@ void arch_i386_end_loop(size_t loop_tgt) {
 }
 
 void arch_i386_post_cmd() {
-	if(out_off >= header_tape_addr - header_code_start)
+	if(out_off >= TAPE_ADDR - CODE_START)
 		error("error: code section too large");
 }
 
 void arch_i386_get_tape_max(size_t *out) {
-	*out = (header_tape_addr & -header_tape_addr) >> 1;
+	*out = (TAPE_ADDR & -TAPE_ADDR) >> 1;
 }

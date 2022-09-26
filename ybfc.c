@@ -19,7 +19,7 @@ FILE* output;
 size_t out_off;
 int current_arch = ARCH_i386;
 
-void writebuf2(byte* buf, size_t size) {
+void writebuf2(const byte* buf, size_t size) {
 	if(fwrite(buf, 1, size, output) != size)
 		error("error writing to output: %s", strerror(errno));
 	out_off += size;

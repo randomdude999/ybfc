@@ -1,6 +1,7 @@
 #include "bfc_common.h"
 
-#include "header_x64.h"
+#define ELF_BITS 64
+#include "elf_writer.c"
 
 static void reloc64(size_t reloc_at, uint64_t data) {
 	size_t old_out_pos = out_off;
@@ -11,21 +12,22 @@ static void reloc64(size_t reloc_at, uint64_t data) {
 	fseek(output, out_off, SEEK_SET);
 }
 
+#define TAPE_ADDR 0x200000000000ull
+
+
+void* header_write_locs_x64;
 void arch_x64_write_header(size_t tape_size) {
-	writebuf(header_bin);
-	reloc64(header_tape_size, tape_size);
-	if(header_tape_size_2 != 0) reloc64(header_tape_size_2, tape_size);
-	reloc64(header_tape_andmask, header_tape_addr + tape_size - 1);
+	uint64_t TAPE_ANDMASK = TAPE_ADDR + tape_size - 1;
+#include "header_x64.h"
+	header_write_locs_x64 = write_elf_hdr(0x01000000, TAPE_ADDR, tape_size, 1, sizeof(prelude_lib), 62);
+	writebuf(prelude_lib);
+	writebuf(prelude_start);
 }
 
 void arch_x64_end() {
             // xor eax,eax; mov al, 60; xor edi, edi; syscall
 	writebuf(B(0x31, 0xc0, 0xb0, 0x3c, 0x31, 0xff, 0x0f, 0x05));
-	uint64_t fsz = out_off;
-	// twice because this is both the memory and file size
-	reloc64(header_file_size_loc, fsz);
-	reloc64(header_file_size_loc+8, fsz);
-	if(header_file_size_2 != 0) reloc64(header_file_size_2, fsz - header_sub_input);
+	finalize_elf_header(header_write_locs_x64);
 }
 
 #define RLE_BYTE(bytes1, bytesn) if(run_length == 1) writebuf(bytes1); \
@@ -114,10 +116,10 @@ void arch_x64_end_loop(size_t loop_tgt) {
 }
 
 void arch_x64_post_cmd() {
-	if(out_off >= header_tape_addr - header_code_start)
+	if(out_off >= TAPE_ADDR - 0x01000000)
 		error("error: code section too large");
 }
 
 void arch_x64_get_tape_max(size_t *out) {
-	*out = (header_tape_addr & -header_tape_addr) >> 1;
+	*out = (TAPE_ADDR & -TAPE_ADDR) >> 1;
 }

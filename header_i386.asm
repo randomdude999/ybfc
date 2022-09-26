@@ -11,48 +11,6 @@ export_tape_addr equ tape_addr
 export_code_start equ 0x01000000
 org export_code_start
 
-  ehdr:                                                 ; Elf32_Ehdr
-                db      0x7F, "ELF", 1, 1, 1, 0         ;   e_ident
-        times 8 db      0
-                dw      2                               ;   e_type
-                dw      3                               ;   e_machine
-                dd      1                               ;   e_version
-                dd      _start                          ;   e_entry
-                dd      phdr - $$                       ;   e_phoff
-                dd      0                               ;   e_shoff
-                dd      0                               ;   e_flags
-                dw      ehdrsize                        ;   e_ehsize
-                dw      phdrsize                        ;   e_phentsize
-                dw      2                               ;   e_phnum
-                dw      0                               ;   e_shentsize
-                dw      0                               ;   e_shnum
-                dw      0                               ;   e_shstrndx
-  
-  ehdrsize      equ     $ - ehdr
-  
-  phdr:                                                 ; Elf32_Phdr
-                dd      1                               ;   p_type
-                dd      0                               ;   p_offset
-                dd      $$                              ;   p_vaddr
-                dd      $$                              ;   p_paddr
-export_file_size_loc   equ $ - $$
-                dd      0x69696969                      ;   p_filesz
-                dd      0x69696969                      ;   p_memsz
-                dd      5                               ;   p_flags
-                dd      1                               ;   p_align
-  phdrsize      equ     $ - phdr
-                                                        ; 2nd header entry
-                dd      1                               ;   p_type
-                dd      0                               ;   p_offset
-                dd      tape_addr                       ;   p_vaddr
-                dd      0                               ;   p_paddr
-                dd      0                               ;   p_filesz
-export_tape_size equ $ - $$
-                dd      0x69696969                       ;   p_memsz
-                dd      6                               ;   p_flags
-                dd      1                               ;   p_align
-  
-
 export_sub_input equ $ - $$
     xor eax,eax
     mov al, 3
