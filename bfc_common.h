@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: ISC
 #ifndef _BFC_COMMON_H
 #define _BFC_COMMON_H
 #include <stdint.h>

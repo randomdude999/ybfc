@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: ISC
 #include "arch_common.h"
 #include "bfc_common.h"
 

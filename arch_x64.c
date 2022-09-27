@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: ISC
 #include "bfc_common.h"
 
 #define ELF_BITS 64

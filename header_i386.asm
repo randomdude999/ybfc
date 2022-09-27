@@ -1,10 +1,8 @@
+; SPDX-License-Identifier: ISC
 ; vim: syntax=nasm
 tape_addr     equ 0x80000000
 export_tape_addr equ tape_addr
 ;tape_size     equ 0x00100000
-
-; assumes size is a power of 2, and that the size'th bit in addr is 0
-; tape_andmask equ tape_addr+tape_size-1
 
 [bits 32]
 [map symbols header_sym.map]

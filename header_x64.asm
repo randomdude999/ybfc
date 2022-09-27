@@ -1,3 +1,4 @@
+; SPDX-License-Identifier: ISC
 ; vim: syntax=nasm
 tape_addr equ 0x200000000000
 export_tape_addr equ tape_addr
