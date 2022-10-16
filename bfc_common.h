@@ -18,6 +18,7 @@ extern int current_arch;
 
 #define ARCH_i386 0
 #define ARCH_x64 1
+#define ARCH_win32 2
 
 void writebuf2(const byte* buf, size_t size);
 #define writebuf(buf) writebuf2(buf, sizeof(buf))

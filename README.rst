@@ -85,3 +85,16 @@ contains the address of a trampoline routine that uses the return pointer to
 read said 6-byte offset and jump to either into or past the loop. The end of a
 long loop is similar, but it uses ``call r8``, which jumps to the middle of the
 trampoline, skipping the condition check.
+
+implementation details (win32)
+------------------------------
+
+preliminary win32 reg layout:
+
+ebx - start of tape
+ecx - end of tape (one byte past)
+eax - current tape offset
+esi - stdin handle
+edi - stdout handle
+ebp - tape length
+edx - always zero?

@@ -19,6 +19,7 @@ const char* out_fname = "a.out";
 FILE* output;
 size_t out_off;
 int current_arch = ARCH_i386;
+size_t tape_size = 0x8000;
 
 void writebuf2(const byte* buf, size_t size) {
 	if(fwrite(buf, 1, size, output) != size)
@@ -43,8 +44,8 @@ void end_run() {
 	if(run_length == 0) return;
 	if(run_type == '+') arch_cmd_inc_run(run_length);
 	else if(run_type == '-') arch_cmd_dec_run(run_length);
-	else if(run_type == '<') arch_cmd_l_run(run_length);
-	else if(run_type == '>') arch_cmd_r_run(run_length);
+	else if(run_type == '<') arch_cmd_l_run(run_length % tape_size);
+	else if(run_type == '>') arch_cmd_r_run(run_length % tape_size);
 	run_length = 0;
 	run_type = '\0';
 }
@@ -87,7 +88,6 @@ void process_file(char * fname) {
 }
 
 int main(int argc, char** argv) {
-	size_t tape_size = 0x8000;
 	int opt;
 	loopstack = malloc(loopstack_size*sizeof(size_t));
 	while ((opt = getopt(argc, argv, "t:o:m:")) != -1) {
@@ -102,12 +102,11 @@ int main(int argc, char** argv) {
 			if(errno == ERANGE || tmp_tape < 0 || *endptr != '\0')
 				error("error: invalid tape size");
 			tape_size = tmp_tape;
-			if(tape_size & (tape_size-1))
-				error("error: tape size must be a power of 2");
 			break;
 		case 'm':
 			if(!strcmp(optarg, "i386")) current_arch = ARCH_i386;
 			else if(!strcmp(optarg, "x64")) current_arch = ARCH_x64;
+			else if(!strcmp(optarg, "win32")) current_arch = ARCH_win32;
 			else error("error: unknown architecture");
 			break;
 		default:
@@ -120,6 +119,8 @@ int main(int argc, char** argv) {
 	size_t max_tape_size; arch_get_tape_max(&max_tape_size);
 	if(tape_size > max_tape_size)
 		error("error: tape too large (maximum %zu)", max_tape_size);
+	if(current_arch != ARCH_win32 && (tape_size & (tape_size-1)))
+		error("error: tape size must be a power of 2");
 	if(optind >= argc)
 		error("error: no input files specified (use - to read from stdin)");
 	output = fopen(out_fname, "w");
