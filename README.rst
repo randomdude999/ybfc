@@ -89,10 +89,20 @@ trampoline, skipping the condition check.
 implementation details (win32)
 ------------------------------
 
-ebx - start of tape
-ecx - end of tape (one byte past)
-eax - current tape offset
-esi - stdin handle
-edi - stdout handle
-ebp - tape length
-edx - always 0
+The win32 implementation works mostly like i386, except the tape wrapping is
+implemented in a more basic way and doesn't require tape size to be a power of
+2 (though this means the emitted code is a little longer). The register
+allocation is as follows:
+
+| eax - current tape offset
+| ebx - start of tape
+| ecx - end of tape (one byte past)
+| edx - always 0
+| esi - stdin handle
+| edi - stdout handle
+| ebp - tape length
+
+In order to conform with brainfuck specifications, input and output should
+always be done with Unix-style line endings. This is implemented by simply
+skipping all ``\r``-s in the input. As for output, if the standard output stream
+is opened in text mode then Windows automatically converts ``\n`` to ``\r\n``.
