@@ -119,11 +119,12 @@ db "kernel32.dll"
 dd 0 ; padding?
 ; lookup table for kernel32:
 .import_lookup_table:
-dd .name_writefile - import_base ; import by name, name at 0x3058
+dd .name_writefile - import_base ; import by name, name at .name_...
 dd .name_readfile - import_base
 dd .name_getstdhandle - import_base
 dd .name_suef - import_base
 dd .name_valloc - import_base
+dd .name_exitprocess - import_base
 dd 0 ; null - end of table
 ; thunk table for kernel32:
 .thunk_table:
@@ -137,6 +138,9 @@ SUEF equ $ - import_base + $$
 dd .name_suef - import_base
 VirtualAlloc equ $ - import_base + $$
 dd .name_valloc - import_base
+ExitProcess equ $ - import_base + $$
+export_exitprocess_ptr equ ExitProcess
+dd .name_exitprocess - import_base
 dd 0
 ; hint/name table:
 .name_writefile:
@@ -153,7 +157,10 @@ dw 0
 db "SetUnhandledExceptionFilter",0
 .name_valloc:
 dw 0
-db "VirtualAlloc",0
+db "VirtualAlloc",0,0
+.name_exitprocess:
+dw 0
+db "ExitProcess",0
 section_import_end:
 
 times $$+0x400-$ db 0
@@ -247,17 +254,9 @@ push ebp
 push 0
 call dword [VirtualAlloc]
 ; eax - start of tape
+; TODO: check that eax is nonzero?
 mov ebx, eax
 lea ecx, [eax+ebp]
 xor edx,edx
-
-;call input
-;add byte [eax], 1
-;call output
-;mov byte [eax], 'A'
-;call output
-
-;xor eax,eax
-;ret
 
 section_code_end:

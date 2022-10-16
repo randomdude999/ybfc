@@ -21,7 +21,9 @@ void arch_win32_write_header(size_t tape_size) {
 
 void arch_win32_end() {
 			// xor eax,eax; ret
-	writebuf(B(0x31, 0xc0, 0xc3));
+	//writebuf(B(0x31, 0xc0, 0xc3));
+	// push 0; call [ExitProcess]
+	writebuf(B(0x6a, 0x00, 0xff, 0x15, LE32(header_exitprocess_ptr)));
 	uint32_t code_size = out_off - header_code_section_start;
 	uint32_t padding = 0x200 - (out_off & 0x1ff);
 	if(padding == 0x200) padding = 0;
