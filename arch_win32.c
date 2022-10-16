@@ -73,8 +73,8 @@ void arch_win32_cmd_out() {
 	writebuf(B(0xe8, LE32(header_output_loc - out_off - 5)));
 }
 
-                       // cmp [ecx], byte 0; je <relocated addr>
-static byte start_loop_asm[] = { 0x80, 0x38, 0x00, 0x0f, 0x84, 42, 42, 42, 42 };
+                       // cmp [eax], dl; je <relocated addr>
+static byte start_loop_asm[] = { 0x38, 0x10, 0x0f, 0x84, 42, 42, 42, 42 };
 
 void arch_win32_start_loop() {
 	writebuf(start_loop_asm);

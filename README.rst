@@ -89,12 +89,10 @@ trampoline, skipping the condition check.
 implementation details (win32)
 ------------------------------
 
-preliminary win32 reg layout:
-
 ebx - start of tape
 ecx - end of tape (one byte past)
 eax - current tape offset
 esi - stdin handle
 edi - stdout handle
 ebp - tape length
-edx - always zero?
+edx - always 0

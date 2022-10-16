@@ -249,6 +249,7 @@ call dword [VirtualAlloc]
 ; eax - start of tape
 mov ebx, eax
 lea ecx, [eax+ebp]
+xor edx,edx
 
 ;call input
 ;add byte [eax], 1
