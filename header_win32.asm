@@ -215,15 +215,10 @@ mov edx, [eax]
 cmp edx, 0xc0000005
 ; if not page fault, skip
 jne .ret0
+; grab the faulted address
 mov edx, [eax+24]
 and edx, 0xfffff000
-; check if address is in the tape buffer
-;mov ecx, edx
-;sub ecx, [tapeptr]
-;cmp ecx, 0x20000000
-; if not, skip
-;ja .ret0
-; allocate that address
+; and try to allocate it
 push 0x04 ; PAGE_READWRITE
 push 0x00001000 ; MEM_COMMIT
 push 0x1000
