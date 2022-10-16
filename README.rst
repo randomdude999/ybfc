@@ -106,3 +106,9 @@ In order to conform with brainfuck specifications, input and output should
 always be done with Unix-style line endings. This is implemented by simply
 skipping all ``\r``-s in the input. As for output, if the standard output stream
 is opened in text mode then Windows automatically converts ``\n`` to ``\r\n``.
+
+Memory is managed by ``VirtualAlloc(MEM_RESERVE)``'ing the entire tape at
+startup, and installing a page fault handler (using
+``SetUnhandledExceptionFilter``) which tries to ``VirtualAlloc(MEM_COMMIT)`` the
+address, and resumes execution. This has the same effect as just
+``malloc()``'ing the tape and using it normally on Linux.
